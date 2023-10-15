@@ -1,0 +1,92 @@
+import os
+from typing import Dict, List, Tuple
+
+import cv2
+import numpy as np
+import pandas as pd
+import torch
+from numpy import ndarray
+from pandas import DataFrame
+from torch.utils.data import Dataset
+
+from src.data.MaskVisualizer import MaskVisualizer
+
+
+def to_dict(table: DataFrame) -> Dict[str, List[str]]:
+    state_dict = {}
+    not_nan = table['EncodedPixels'].notna()
+    for index, row in table[not_nan].iterrows():
+        image_id = row['ImageId']
+        if image_id not in state_dict.keys():
+            state_dict[image_id] = []
+        na = row.isna()
+        if not na['EncodedPixels']:
+            state_dict[image_id].append(row['EncodedPixels'])
+    return state_dict
+
+
+class AirbusShipDetectionDataset(Dataset):
+    def __init__(self, images_dir: str, annotations_file: str):
+        self._images_dir = images_dir
+
+        table = pd.read_csv(annotations_file, sep=',')
+
+        self._all_image_names = table['ImageId'].unique().tolist()
+        self._ships_encodings_dict = to_dict(table)
+
+        self._image_names_with_ships = list(self._ships_encodings_dict.keys())
+        self._image_names_without_ships = list(set(self._all_image_names).difference(self._image_names_with_ships))
+
+        self._mask_visualizer = MaskVisualizer(image_hw=(768, 768))
+
+        self._rotate_prob = 0.5
+        self._flip_prob = 0.5
+
+    def __len__(self):
+        return len(self._all_image_names)
+
+    def _get_random_image_name_and_ship_encodings(self, index: int) -> Tuple[str, List[str]]:
+        ship_encodings = []
+        if index % 2 == 0:
+            random_image_with_ships_idx = np.random.randint(len(self._image_names_with_ships))
+            image_name = self._image_names_with_ships[random_image_with_ships_idx]
+            ship_encodings = self._ships_encodings_dict[image_name]
+        else:
+            image_name_without_ship_idx = np.random.randint(len(self._image_names_without_ships))
+            image_name = self._image_names_without_ships[image_name_without_ship_idx]
+        return image_name, ship_encodings
+
+    def _apply_augmentations(self, image: ndarray, mask: ndarray) -> Tuple[ndarray, ndarray]:
+        do_rotate = np.random.rand() < self._rotate_prob
+        if do_rotate:
+            directions = [cv2.ROTATE_90_CLOCKWISE, cv2.ROTATE_90_COUNTERCLOCKWISE]
+            random_direction_idx = np.random.randint(len(directions))
+            random_direction = directions[random_direction_idx]
+            image = cv2.rotate(image, rotateCode=random_direction)
+            mask = cv2.rotate(mask, rotateCode=random_direction)
+
+        do_flip = np.random.rand() < self._flip_prob
+        if do_flip:
+            image = cv2.flip(image, 1)
+            mask = cv2.flip(mask, 1)
+        return image, mask
+
+    def __getitem__(self, index):
+        image_name, ship_encodings = self._get_random_image_name_and_ship_encodings(index)
+
+        image_path = os.path.join(self._images_dir, image_name)
+        image = cv2.imread(image_path)
+
+        assert image is not None, image_path
+        assert image.shape[:2] == (768, 768)
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        mask = self._mask_visualizer.visualize(ship_encodings)
+
+        image, mask = self._apply_augmentations(image=image, mask=mask)
+
+        image_tensor = torch.from_numpy(np.transpose(image, (2, 0, 1)))
+        mask_tensor = torch.from_numpy(np.transpose(np.expand_dims(mask, 2), (2, 0, 1))).long()
+
+        sample = {'image': image_tensor, 'mask': mask_tensor}
+        return sample
