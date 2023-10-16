@@ -43,6 +43,7 @@ class AirbusShipDetectionDataset(Dataset):
         self._flip_prob = 0.5
 
         self._crop_hw = (256, 256)
+        self._center_crop_random_shift = 0.3
         self._image_hw = (768, 768)
 
     def __len__(self):
@@ -91,6 +92,16 @@ class AirbusShipDetectionDataset(Dataset):
         else:
             # Centered crop
             center_x, center_y = self._get_random_non_zero_pixel_xy(mask)
+            # Shift center crop
+
+            random_shift_factor_x = np.random.uniform(-self._center_crop_random_shift, self._center_crop_random_shift)
+            random_shift_factor_y = np.random.uniform(-self._center_crop_random_shift, self._center_crop_random_shift)
+            shift_x = int(random_shift_factor_x * self._crop_hw[1])
+            shift_y = int(random_shift_factor_y * self._crop_hw[0])
+
+            center_x += shift_x
+            center_y += shift_y
+
             x0 = max(center_x - self._crop_hw[1] // 2, 0)
             y0 = max(center_y - self._crop_hw[0] // 2, 0)
 
