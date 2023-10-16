@@ -34,8 +34,8 @@ class AirbusShipDetectionDataset(Dataset):
         self._image_names = image_names
         self._ships_encodings = ship_encodings
 
-        self._image_names_with_ships = list(self._ships_encodings.keys())
-        self._image_names_without_ships = list(set(self._image_names).difference(self._image_names_with_ships))
+        self._image_names_with_ships = list(ship_encodings.keys())
+        self._image_names_without_ships = list(set(image_names).difference(self._image_names_with_ships))
 
         self._mask_decoder = MaskDecoder(image_hw=(768, 768))
 
