@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from typing import Dict, List, Tuple
 
@@ -26,16 +28,14 @@ def to_dict(table: DataFrame) -> Dict[str, List[str]]:
 
 
 class AirbusShipDetectionDataset(Dataset):
-    def __init__(self, images_dir: str, annotations_file: str):
+    def __init__(self, images_dir: str, image_names: List[str], ship_encodings: Dict[str, List[str]]):
         self._images_dir = images_dir
 
-        table = pd.read_csv(annotations_file, sep=',')
+        self._image_names = image_names
+        self._ships_encodings = ship_encodings
 
-        self._all_image_names = table['ImageId'].unique().tolist()
-        self._ships_encodings_dict = to_dict(table)
-
-        self._image_names_with_ships = list(self._ships_encodings_dict.keys())
-        self._image_names_without_ships = list(set(self._all_image_names).difference(self._image_names_with_ships))
+        self._image_names_with_ships = list(self._ships_encodings.keys())
+        self._image_names_without_ships = list(set(self._image_names).difference(self._image_names_with_ships))
 
         self._mask_decoder = MaskDecoder(image_hw=(768, 768))
 
@@ -47,14 +47,14 @@ class AirbusShipDetectionDataset(Dataset):
         self._image_hw = (768, 768)
 
     def __len__(self):
-        return len(self._all_image_names)
+        return len(self._image_names)
 
     def _get_random_balanced_image_name_and_ship_encodings(self, index: int) -> Tuple[str, List[str]]:
         ship_encodings = []
         if index % 2 == 0:
             random_image_with_ships_idx = np.random.randint(len(self._image_names_with_ships))
             image_name = self._image_names_with_ships[random_image_with_ships_idx]
-            ship_encodings = self._ships_encodings_dict[image_name]
+            ship_encodings = self._ships_encodings[image_name]
         else:
             image_name_without_ship_idx = np.random.randint(len(self._image_names_without_ships))
             image_name = self._image_names_without_ships[image_name_without_ship_idx]
@@ -142,3 +142,12 @@ class AirbusShipDetectionDataset(Dataset):
 
         sample = {'image': image_tensor, 'mask': mask_tensor}
         return sample
+
+    @classmethod
+    def initialize(cls, images_dir: str, annotations_file: str) -> AirbusShipDetectionDataset:
+        table = pd.read_csv(annotations_file, sep=',')
+
+        image_names = table['ImageId'].unique().tolist()
+        ships_encodings = to_dict(table)
+        return AirbusShipDetectionDataset(images_dir=images_dir, image_names=image_names,
+                                          ship_encodings=ships_encodings)
