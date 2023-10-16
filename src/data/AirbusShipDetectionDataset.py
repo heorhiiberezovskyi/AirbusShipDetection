@@ -43,6 +43,7 @@ class AirbusShipDetectionDataset(Dataset):
         self._flip_prob = 0.5
 
         self._crop_hw = (256, 256)
+        self._image_hw = (768, 768)
 
     def __len__(self):
         return len(self._all_image_names)
@@ -113,14 +114,17 @@ class AirbusShipDetectionDataset(Dataset):
         image = cv2.imread(image_path)
 
         assert image is not None, image_path
-        assert image.shape[:2] == (768, 768)
+        assert image.shape[:2] == self._image_hw
 
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        mask = self._mask_visualizer.visualize(ship_encodings)
+        mask = self._mask_decoder.decode(ship_encodings)
+        assert mask.shape[:2] == self._image_hw
 
         image, mask = self._random_crop(image=image, mask=mask)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         image, mask = self._apply_augmentations(image=image, mask=mask)
+        assert image.shape[:2] == self._crop_hw
+        assert mask.shape[:2] == self._crop_hw
 
         image_tensor = torch.from_numpy(np.transpose(image, (2, 0, 1)))
         mask_tensor = torch.from_numpy(np.transpose(np.expand_dims(mask, 2), (2, 0, 1))).long()
