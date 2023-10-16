@@ -2,3 +2,5 @@ pandas
 matplotlib
 opencv-python
 torchvision
+lightning
+tensorboard
