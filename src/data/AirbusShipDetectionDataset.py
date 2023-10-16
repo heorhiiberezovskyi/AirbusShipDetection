@@ -42,6 +42,8 @@ class AirbusShipDetectionDataset(Dataset):
         self._rotate_prob = 0.5
         self._flip_prob = 0.5
 
+        self._crop_hw = (256, 256)
+
     def __len__(self):
         return len(self._all_image_names)
 
@@ -71,6 +73,39 @@ class AirbusShipDetectionDataset(Dataset):
             mask = cv2.flip(mask, 1)
         return image, mask
 
+    @staticmethod
+    def _get_random_non_zero_pixel_xy(mask: ndarray) -> Tuple[int, int]:
+        non_zero_y, non_zero_x = mask.nonzero()
+        idx = np.random.randint(len(non_zero_y))
+        x, y = non_zero_x[idx], non_zero_y[idx]
+        return x, y
+
+    def _get_random_crop_x0y0x1y1(self, image: ndarray, mask: ndarray) -> Tuple[int, int, int, int]:
+        img_hw = image.shape[:2]
+        if not mask.any():
+            x0 = np.random.randint(img_hw[1] - self._crop_hw[1])
+            y0 = np.random.randint(img_hw[0] - self._crop_hw[0])
+            x1 = x0 + self._crop_hw[1]
+            y1 = y0 + self._crop_hw[0]
+        else:
+            # Centered crop
+            center_x, center_y = self._get_random_non_zero_pixel_xy(mask)
+            x0 = max(center_x - self._crop_hw[1] // 2, 0)
+            y0 = max(center_y - self._crop_hw[0] // 2, 0)
+
+            x1 = min(x0 + self._crop_hw[1], img_hw[1])
+            y1 = min(y0 + self._crop_hw[0], img_hw[0])
+
+            x0 = x1 - self._crop_hw[1]
+            y0 = y1 - self._crop_hw[0]
+        return x0, y0, x1, y1
+
+    def _random_crop(self, image: ndarray, mask: ndarray) -> Tuple[ndarray, ndarray]:
+        x0, y0, x1, y1 = self._get_random_crop_x0y0x1y1(image, mask)
+        img_crop = image[y0: y1, x0: x1]
+        mask_crop = mask[y0: y1, x0: x1]
+        return img_crop, mask_crop
+
     def __getitem__(self, index):
         image_name, ship_encodings = self._get_random_balanced_image_name_and_ship_encodings(index)
 
@@ -82,6 +117,8 @@ class AirbusShipDetectionDataset(Dataset):
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         mask = self._mask_visualizer.visualize(ship_encodings)
+
+        image, mask = self._random_crop(image=image, mask=mask)
 
         image, mask = self._apply_augmentations(image=image, mask=mask)
 
