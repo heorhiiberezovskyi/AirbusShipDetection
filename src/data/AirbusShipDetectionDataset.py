@@ -9,7 +9,7 @@ from numpy import ndarray
 from pandas import DataFrame
 from torch.utils.data import Dataset
 
-from src.data.MaskVisualizer import MaskVisualizer
+from src.data.MaskDecoder import MaskDecoder
 
 
 def to_dict(table: DataFrame) -> Dict[str, List[str]]:
@@ -37,7 +37,7 @@ class AirbusShipDetectionDataset(Dataset):
         self._image_names_with_ships = list(self._ships_encodings_dict.keys())
         self._image_names_without_ships = list(set(self._all_image_names).difference(self._image_names_with_ships))
 
-        self._mask_visualizer = MaskVisualizer(image_hw=(768, 768))
+        self._mask_decoder = MaskDecoder(image_hw=(768, 768))
 
         self._rotate_prob = 0.5
         self._flip_prob = 0.5
