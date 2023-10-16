@@ -17,16 +17,15 @@ class ImageNetNorm(nn.Module):
         return x
 
 
-class ConvLNRelu(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, relu_slope: float = 0.2):
+class ConvGNRelu(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int, gn_groups: int, relu_slope: float = 0.2):
         super().__init__()
 
         self._in_channels = in_channels
         self._out_channels = out_channels
-
         self.block = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            nn.LayerNorm(out_channels),
+            nn.GroupNorm(num_groups=gn_groups, num_channels=out_channels),
             nn.LeakyReLU(inplace=True, negative_slope=relu_slope)
         )
 
@@ -42,8 +41,8 @@ class Block(nn.Module):
         self._out_channels = out_channels
         self._residual = residual
 
-        self.proc_1 = ConvLNRelu(in_channels, out_channels)
-        self.proc_2 = ConvLNRelu(out_channels, out_channels)
+        self.proc_1 = ConvGNRelu(in_channels, out_channels, gn_groups=8)
+        self.proc_2 = ConvGNRelu(out_channels, out_channels, gn_groups=8)
 
     def forward(self, x):
         if self._residual:
@@ -55,13 +54,13 @@ class Block(nn.Module):
 
 
 class DownConv(nn.Module):
-    def __init__(self, channels: int):
+    def __init__(self, channels: int, gn_groups: int):
         super().__init__()
         self._channels = channels
 
         self.block = nn.Sequential(
             nn.Conv2d(channels, channels, kernel_size=2, stride=2, bias=False),
-            nn.LayerNorm(channels)
+            nn.GroupNorm(num_channels=channels, num_groups=gn_groups)
         )
 
     def forward(self, x):
@@ -104,7 +103,7 @@ class EncoderDownModule(nn.Module):
         self._in_channels = in_channels
         self._residual_block = residual_block
 
-        self.down = DownConv(in_channels)
+        self.down = DownConv(in_channels, gn_groups=8)
         self.enc = Block(in_channels, in_channels * 2, residual_block)
 
     def forward(self, x: Tensor):
