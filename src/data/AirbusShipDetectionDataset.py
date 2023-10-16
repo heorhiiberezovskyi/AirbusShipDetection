@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import random
 from typing import Dict, List, Tuple
 
 import cv2
@@ -142,6 +143,33 @@ class AirbusShipDetectionDataset(Dataset):
 
         sample = {'image': image_tensor, 'mask': mask_tensor}
         return sample
+
+    def split_train_val(self, train_percent: float) -> Tuple[AirbusShipDetectionDataset, AirbusShipDetectionDataset]:
+        assert 0. < train_percent < 1.
+        image_names = self._image_names.copy()
+        random.shuffle(image_names)
+        num_train_images = int(len(self._image_names) * train_percent)
+        train_image_names = image_names[:num_train_images]
+        val_image_names = image_names[num_train_images:]
+
+        train_encodings = {}
+        val_encodings = {}
+        for img_name, encodings in self._ships_encodings.items():
+            if img_name in train_image_names:
+                assert img_name not in val_image_names
+                train_encodings[img_name] = encodings
+            elif img_name in val_image_names:
+                assert img_name not in train_image_names
+                val_encodings[img_name] = encodings
+            else:
+                raise AssertionError('')
+        train = AirbusShipDetectionDataset(images_dir=self._images_dir,
+                                           image_names=train_image_names,
+                                           ship_encodings=train_encodings)
+        val = AirbusShipDetectionDataset(images_dir=self._images_dir,
+                                         image_names=val_image_names,
+                                         ship_encodings=val_encodings)
+        return train, val
 
     @classmethod
     def initialize(cls, images_dir: str, annotations_file: str) -> AirbusShipDetectionDataset:
