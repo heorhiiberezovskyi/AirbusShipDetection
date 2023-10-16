@@ -120,12 +120,12 @@ class AirbusShipDetectionDataset(Dataset):
         assert mask.shape[:2] == self._image_hw
 
         image, mask = self._random_crop(image=image, mask=mask)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         image, mask = self._apply_augmentations(image=image, mask=mask)
         assert image.shape[:2] == self._crop_hw
         assert mask.shape[:2] == self._crop_hw
 
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_tensor = torch.from_numpy(np.transpose(image, (2, 0, 1)))
         mask_tensor = torch.from_numpy(np.transpose(np.expand_dims(mask, 2), (2, 0, 1))).long()
 
