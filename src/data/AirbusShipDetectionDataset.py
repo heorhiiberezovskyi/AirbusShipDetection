@@ -30,23 +30,18 @@ def to_dict(table: DataFrame) -> Dict[str, List[str]]:
 
 class AirbusShipDetectionDataset(Dataset):
     def __init__(self, images_dir: str, image_names: List[str], ship_encodings: Dict[str, List[str]],
-                 crop_hw: Optional[Tuple[int, int]], test: bool):
+                 crop_hw: Optional[Tuple[int, int]]):
         self._images_dir = images_dir
 
         self._image_names = image_names
         self._ships_encodings = ship_encodings
 
         self._crop_hw = crop_hw
-        self._test = test
-
-        if test:
-            assert not ship_encodings, 'In test mode there are no gt masks available!'
 
         self._image_names_with_ships = list(ship_encodings.keys())
         self._image_names_without_ships = list(set(image_names).difference(self._image_names_with_ships))
 
-        if not test:
-            assert self._image_names_with_ships, 'Absent annotations encountered during training!'
+        assert self._image_names_with_ships
 
         print('With ships: %s' % len(self._image_names_with_ships))
         print('Without ships: %s' % len(self._image_names_without_ships))
@@ -132,11 +127,7 @@ class AirbusShipDetectionDataset(Dataset):
         return img_crop, mask_crop
 
     def __getitem__(self, index):
-        if self._test:
-            ship_encodings = []
-            image_name = self._image_names_without_ships[index]
-        else:
-            image_name, ship_encodings = self._get_random_balanced_image_name_and_ship_encodings(index)
+        image_name, ship_encodings = self._get_random_balanced_image_name_and_ship_encodings(index)
 
         image_path = os.path.join(self._images_dir, image_name)
         image = cv2.imread(image_path)
@@ -183,21 +174,19 @@ class AirbusShipDetectionDataset(Dataset):
         train = AirbusShipDetectionDataset(images_dir=self._images_dir,
                                            image_names=train_image_names,
                                            ship_encodings=train_encodings,
-                                           test=self._test,
                                            crop_hw=self._crop_hw)
         val = AirbusShipDetectionDataset(images_dir=self._images_dir,
                                          image_names=val_image_names,
                                          ship_encodings=val_encodings,
-                                         test=self._test,
                                          crop_hw=self._crop_hw)
         return train, val
 
     @classmethod
-    def initialize(cls, images_dir: str, annotations_file: str, crop_hw: Optional[Tuple[int, int]], test: bool) \
+    def initialize(cls, images_dir: str, annotations_file: str, crop_hw: Optional[Tuple[int, int]]) \
             -> AirbusShipDetectionDataset:
         table = pd.read_csv(annotations_file, sep=',')
 
         image_names = table['ImageId'].unique().tolist()
         ships_encodings = to_dict(table)
         return AirbusShipDetectionDataset(images_dir=images_dir, image_names=image_names,
-                                          ship_encodings=ships_encodings, crop_hw=crop_hw, test=test)
+                                          ship_encodings=ships_encodings, crop_hw=crop_hw)
