@@ -14,7 +14,8 @@ if __name__ == '__main__':
 
     dataset = AirbusShipDetectionDataset.initialize(
         images_dir=r'D:\Data\airbus-ship-detection\train_v2',
-        annotations_file=r'D:\Data\airbus-ship-detection\train_ship_segmentations_v2.csv')
+        annotations_file=r'D:\Data\airbus-ship-detection\train_ship_segmentations_v2.csv',
+        crop_hw=(256, 256))
     train_dataset, val_dataset = dataset.split_train_val(train_percent=0.9)
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)

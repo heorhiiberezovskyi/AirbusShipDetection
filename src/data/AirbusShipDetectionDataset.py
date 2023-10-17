@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import cv2
 import numpy as np
@@ -29,7 +29,8 @@ def to_dict(table: DataFrame) -> Dict[str, List[str]]:
 
 
 class AirbusShipDetectionDataset(Dataset):
-    def __init__(self, images_dir: str, image_names: List[str], ship_encodings: Dict[str, List[str]]):
+    def __init__(self, images_dir: str, image_names: List[str], ship_encodings: Dict[str, List[str]],
+                 crop_hw: Optional[Tuple[int, int]]):
         self._images_dir = images_dir
 
         self._image_names = image_names
@@ -43,7 +44,7 @@ class AirbusShipDetectionDataset(Dataset):
         self._rotate_prob = 0.5
         self._flip_prob = 0.5
 
-        self._crop_hw = (256, 256)
+        self._crop_hw = crop_hw
         self._center_crop_random_shift = 0.3
         self._image_hw = (768, 768)
 
@@ -131,7 +132,8 @@ class AirbusShipDetectionDataset(Dataset):
         mask = self._mask_decoder.decode(ship_encodings)
         assert mask.shape[:2] == self._image_hw
 
-        image, mask = self._random_crop(image=image, mask=mask)
+        if self._crop_hw is not None:
+            image, mask = self._random_crop(image=image, mask=mask)
 
         image, mask = self._apply_augmentations(image=image, mask=mask)
         assert image.shape[:2] == self._crop_hw
@@ -172,10 +174,11 @@ class AirbusShipDetectionDataset(Dataset):
         return train, val
 
     @classmethod
-    def initialize(cls, images_dir: str, annotations_file: str) -> AirbusShipDetectionDataset:
+    def initialize(cls, images_dir: str, annotations_file: str, crop_hw: Optional[Tuple[int, int]]) \
+            -> AirbusShipDetectionDataset:
         table = pd.read_csv(annotations_file, sep=',')
 
         image_names = table['ImageId'].unique().tolist()
         ships_encodings = to_dict(table)
         return AirbusShipDetectionDataset(images_dir=images_dir, image_names=image_names,
-                                          ship_encodings=ships_encodings)
+                                          ship_encodings=ships_encodings, crop_hw=crop_hw)
