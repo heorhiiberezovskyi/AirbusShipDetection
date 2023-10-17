@@ -22,13 +22,13 @@ class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
         self.log("train_dice_coefficient", dice)
 
         dice_loss = 1 - dice
-        self.log("train_dice_loss", dice)
+        self.log("train_dice_loss", dice_loss)
 
         bce = self.loss(pred_mask, gt_masks)
         self.log("train_bce_loss", bce)
 
         loss = bce + dice_loss
-        self.log("train_loss", bce)
+        self.log("train_loss", loss)
         return loss
 
     @staticmethod
