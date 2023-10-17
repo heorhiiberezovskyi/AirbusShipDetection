@@ -18,8 +18,10 @@ if __name__ == '__main__':
         crop_hw=(256, 256))
     train_dataset, val_dataset = dataset.split_train_val(train_percent=0.9)
 
-    train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
-    val_loader = DataLoader(dataset=val_dataset, batch_size=128, shuffle=True, num_workers=6, pin_memory=True)
+    train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True,
+                              persistent_workers=True)
+    val_loader = DataLoader(dataset=val_dataset, batch_size=128, shuffle=True, num_workers=6, pin_memory=True,
+                            persistent_workers=True)
 
     # train the model (hint: here are some helpful Trainer arguments for rapid idea iteration)
     trainer = pl.Trainer(max_epochs=10, logger=[CSVLogger(os.getcwd()), TensorBoardLogger(os.getcwd())],
