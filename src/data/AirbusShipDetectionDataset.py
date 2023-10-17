@@ -30,11 +30,18 @@ def to_dict(table: DataFrame) -> Dict[str, List[str]]:
 
 class AirbusShipDetectionDataset(Dataset):
     def __init__(self, images_dir: str, image_names: List[str], ship_encodings: Dict[str, List[str]],
-                 crop_hw: Optional[Tuple[int, int]]):
+                 crop_hw: Optional[Tuple[int, int]], test: bool):
         self._images_dir = images_dir
 
         self._image_names = image_names
         self._ships_encodings = ship_encodings
+
+        self._crop_hw = crop_hw
+        self._test = test
+
+        if test:
+            assert not ship_encodings, 'In test mode there are no gt masks available!' \
+                                       ''
 
         self._image_names_with_ships = list(ship_encodings.keys())
         self._image_names_without_ships = list(set(image_names).difference(self._image_names_with_ships))
@@ -44,7 +51,6 @@ class AirbusShipDetectionDataset(Dataset):
         self._rotate_prob = 0.5
         self._flip_prob = 0.5
 
-        self._crop_hw = crop_hw
         self._center_crop_random_shift = 0.3
         self._image_hw = (768, 768)
 
@@ -53,13 +59,13 @@ class AirbusShipDetectionDataset(Dataset):
 
     def _get_random_balanced_image_name_and_ship_encodings(self, index: int) -> Tuple[str, List[str]]:
         ship_encodings = []
-        if index % 2 == 0 or not self._image_names_with_ships:
-            image_name_without_ship_idx = np.random.randint(len(self._image_names_without_ships))
-            image_name = self._image_names_without_ships[image_name_without_ship_idx]
-        else:
+        if index % 2 == 0:
             random_image_with_ships_idx = np.random.randint(len(self._image_names_with_ships))
             image_name = self._image_names_with_ships[random_image_with_ships_idx]
             ship_encodings = self._ships_encodings[image_name]
+        else:
+            image_name_without_ship_idx = np.random.randint(len(self._image_names_without_ships))
+            image_name = self._image_names_without_ships[image_name_without_ship_idx]
         return image_name, ship_encodings
 
     def _apply_augmentations(self, image: ndarray, mask: ndarray) -> Tuple[ndarray, ndarray]:
@@ -121,8 +127,11 @@ class AirbusShipDetectionDataset(Dataset):
         return img_crop, mask_crop
 
     def __getitem__(self, index):
-        print(index)
-        image_name, ship_encodings = self._get_random_balanced_image_name_and_ship_encodings(index)
+        if self._test:
+            ship_encodings = []
+            image_name = self._image_names_without_ships[index]
+        else:
+            image_name, ship_encodings = self._get_random_balanced_image_name_and_ship_encodings(index)
 
         image_path = os.path.join(self._images_dir, image_name)
         image = cv2.imread(image_path)
@@ -168,18 +177,22 @@ class AirbusShipDetectionDataset(Dataset):
                 raise AssertionError('')
         train = AirbusShipDetectionDataset(images_dir=self._images_dir,
                                            image_names=train_image_names,
-                                           ship_encodings=train_encodings)
+                                           ship_encodings=train_encodings,
+                                           test=self._test,
+                                           crop_hw=self._crop_hw)
         val = AirbusShipDetectionDataset(images_dir=self._images_dir,
                                          image_names=val_image_names,
-                                         ship_encodings=val_encodings)
+                                         ship_encodings=val_encodings,
+                                         test=self._test,
+                                         crop_hw=self._crop_hw)
         return train, val
 
     @classmethod
-    def initialize(cls, images_dir: str, annotations_file: str, crop_hw: Optional[Tuple[int, int]]) \
+    def initialize(cls, images_dir: str, annotations_file: str, crop_hw: Optional[Tuple[int, int]], test: bool) \
             -> AirbusShipDetectionDataset:
         table = pd.read_csv(annotations_file, sep=',')
 
         image_names = table['ImageId'].unique().tolist()
         ships_encodings = to_dict(table)
         return AirbusShipDetectionDataset(images_dir=images_dir, image_names=image_names,
-                                          ship_encodings=ships_encodings, crop_hw=crop_hw)
+                                          ship_encodings=ships_encodings, crop_hw=crop_hw, test=test)
