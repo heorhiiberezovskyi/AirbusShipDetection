@@ -40,8 +40,7 @@ class AirbusShipDetectionDataset(Dataset):
         self._test = test
 
         if test:
-            assert not ship_encodings, 'In test mode there are no gt masks available!' \
-                                       ''
+            assert not ship_encodings, 'In test mode there are no gt masks available!'
 
         self._image_names_with_ships = list(ship_encodings.keys())
         self._image_names_without_ships = list(set(image_names).difference(self._image_names_with_ships))
