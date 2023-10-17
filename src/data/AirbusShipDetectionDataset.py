@@ -181,6 +181,20 @@ class AirbusShipDetectionDataset(Dataset):
                                          crop_hw=self._crop_hw)
         return train, val
 
+    def get_state(self) -> dict:
+        return {'image_names': self._image_names.copy(),
+                'ship_encodings': self._ships_encodings.copy()}
+
+    @classmethod
+    def from_state(cls, state: dict, images_dir: str, crop_hw: Optional[Tuple[int, int]]) \
+            -> AirbusShipDetectionDataset:
+        image_names = state['image_names']
+        ship_encodings = state['ship_encodings']
+        return AirbusShipDetectionDataset(images_dir=images_dir,
+                                          image_names=image_names,
+                                          ship_encodings=ship_encodings,
+                                          crop_hw=crop_hw)
+
     @classmethod
     def initialize(cls, images_dir: str, annotations_file: str, crop_hw: Optional[Tuple[int, int]]) \
             -> AirbusShipDetectionDataset:
