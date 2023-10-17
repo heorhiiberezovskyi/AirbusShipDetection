@@ -30,5 +30,5 @@ class AirbusShipDetectionTestDataset(Dataset):
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_tensor = torch.from_numpy(np.transpose(image, (2, 0, 1)))
-        sample = {'image': image_tensor}
+        sample = {'image': image_tensor, 'image_name': image_name}
         return sample
