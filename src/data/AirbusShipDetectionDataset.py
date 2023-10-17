@@ -49,7 +49,7 @@ class AirbusShipDetectionDataset(Dataset):
             assert self._image_names_with_ships, 'Absent annotations encountered during training!'
 
         print('With ships: %s' % len(self._image_names_with_ships))
-        print('Without ships: %s' % self._image_names_without_ships)
+        print('Without ships: %s' % len(self._image_names_without_ships))
 
         self._mask_decoder = MaskDecoder(image_hw=(768, 768))
 
