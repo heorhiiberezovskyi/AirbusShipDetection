@@ -111,11 +111,10 @@ class EncoderDownModule(nn.Module):
 
 
 class Unet(nn.Module):
-    def __init__(self, init_channels: int, residual_block: bool, inference: bool):
+    def __init__(self, init_channels: int, residual_block: bool):
         super().__init__()
         self._init_channels = init_channels
         self._residual_block = residual_block
-        self.inference = inference
 
         self.image_net_norm = ImageNetNorm()
 
@@ -149,6 +148,5 @@ class Unet(nn.Module):
 
         out = self.out(decoder_1)
 
-        if self.inference:
-            out = torch.sigmoid(out)
+        out = torch.sigmoid(out)
         return out
