@@ -21,8 +21,14 @@ class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
         dice = self.dice_coefficient(pred_mask, gt_masks)
         self.log("train_dice_coefficient", dice)
 
-        loss = self.loss(pred_mask, gt_masks)
-        self.log("train_loss", loss)
+        dice_loss = 1 - dice
+        self.log("train_dice_loss", dice)
+
+        bce = self.loss(pred_mask, gt_masks)
+        self.log("train_bce_loss", bce)
+
+        loss = bce + dice_loss
+        self.log("train_loss", bce)
         return loss
 
     @staticmethod
@@ -34,12 +40,23 @@ class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         images = batch['image']
+        gt_masks = batch['mask'].float()
 
         pred_mask = self.ships_segmentor(images)
 
-        dice = self.dice_coefficient(pred_mask, batch['mask'].float())
+        dice = self.dice_coefficient(pred_mask, gt_masks)
         self.log("val_dice_coefficient", dice)
-        return dice
+
+        dice_loss = 1 - dice
+        self.log("val_dice_loss", dice_loss)
+
+        bce = self.loss(pred_mask, gt_masks)
+        self.log("val_bce_loss", bce)
+
+        loss = dice_loss + bce
+        self.log('val_loss', loss)
+
+        return loss
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=1e-3)
