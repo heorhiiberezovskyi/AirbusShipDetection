@@ -53,13 +53,13 @@ class AirbusShipDetectionDataset(Dataset):
 
     def _get_random_balanced_image_name_and_ship_encodings(self, index: int) -> Tuple[str, List[str]]:
         ship_encodings = []
-        if index % 2 == 0:
+        if index % 2 == 0 or not self._image_names_with_ships:
+            image_name_without_ship_idx = np.random.randint(len(self._image_names_without_ships))
+            image_name = self._image_names_without_ships[image_name_without_ship_idx]
+        else:
             random_image_with_ships_idx = np.random.randint(len(self._image_names_with_ships))
             image_name = self._image_names_with_ships[random_image_with_ships_idx]
             ship_encodings = self._ships_encodings[image_name]
-        else:
-            image_name_without_ship_idx = np.random.randint(len(self._image_names_without_ships))
-            image_name = self._image_names_without_ships[image_name_without_ship_idx]
         return image_name, ship_encodings
 
     def _apply_augmentations(self, image: ndarray, mask: ndarray) -> Tuple[ndarray, ndarray]:
@@ -121,6 +121,7 @@ class AirbusShipDetectionDataset(Dataset):
         return img_crop, mask_crop
 
     def __getitem__(self, index):
+        print(index)
         image_name, ship_encodings = self._get_random_balanced_image_name_and_ship_encodings(index)
 
         image_path = os.path.join(self._images_dir, image_name)
