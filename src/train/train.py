@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True,
                               persistent_workers=True, worker_init_fn=worker_init_fn)
-    val_loader = DataLoader(dataset=val_dataset, batch_size=128, shuffle=False, num_workers=6, pin_memory=True,
+    val_loader = DataLoader(dataset=val_dataset, batch_size=32, shuffle=False, num_workers=6, pin_memory=True,
                             persistent_workers=True)
 
     # train the model (hint: here are some helpful Trainer arguments for rapid idea iteration)
