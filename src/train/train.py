@@ -1,8 +1,11 @@
 import json
 import os
+import random
 from typing import Tuple, Optional
 
 import lightning.pytorch as pl
+import numpy as np
+import torch
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from torch.utils.data import DataLoader, Dataset
 
@@ -50,6 +53,13 @@ def split_and_save_dataset(data_root: str):
         json.dump(val_dataset.get_state(), file)
 
 
+def worker_init_fn(worker_id):
+    seed = torch.initial_seed() % (2 ** 32 - 1)
+    print('Worker ' + str(worker_id) + ' seed set to ' + str(seed))
+    np.random.seed(seed)
+    random.seed(seed)
+
+
 if __name__ == '__main__':
     # split_and_save_dataset(r'D:\Data\airbus-ship-detection')
 
@@ -60,12 +70,12 @@ if __name__ == '__main__':
                                                                crop_hw=(256, 256))
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True,
-                              persistent_workers=True)
+                              persistent_workers=True, worker_init_fn=worker_init_fn)
     val_loader = DataLoader(dataset=val_dataset, batch_size=128, shuffle=False, num_workers=6, pin_memory=True,
                             persistent_workers=True)
 
     # train the model (hint: here are some helpful Trainer arguments for rapid idea iteration)
-    trainer = pl.Trainer(max_epochs=10, logger=[CSVLogger(os.getcwd()), TensorBoardLogger(os.getcwd())],
+    trainer = pl.Trainer(max_epochs=5, logger=[CSVLogger(os.getcwd()), TensorBoardLogger(os.getcwd())],
                          enable_progress_bar=True, enable_checkpointing=True,
                          val_check_interval=0.25, log_every_n_steps=10)
     trainer.fit(model=detector, train_dataloaders=train_loader, val_dataloaders=val_loader)
