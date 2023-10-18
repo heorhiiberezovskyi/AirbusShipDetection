@@ -11,7 +11,7 @@ from src.model.Unet import Unet
 from src.train.AirbusShipDetectorTrainingWrapper import AirbusShipDetectorTrainingWrapper
 
 if __name__ == '__main__':
-    checkpoint = r'C:\Users\gosha\PycharmProjects\AirbusShipDetection\src\train\lightning_logs\version_0\checkpoints\epoch=6-step=33850.ckpt'
+    checkpoint = r'C:\Users\gosha\PycharmProjects\AirbusShipDetection\src\train\lightning_logs\version_2\checkpoints\epoch=6-step=37912.ckpt'
 
     state = torch.load(checkpoint)
 
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     wrapper.load_state_dict(state['state_dict'])
 
     test_imgs_dir = r'D:\Data\airbus-ship-detection\test_v2'
-    predictions_save_dir = r'D:\Data\airbus-ship-detection\predictions'
+    predictions_save_dir = r'D:\Data\airbus-ship-detection\predictions_22'
     os.makedirs(predictions_save_dir, exist_ok=True)
 
     dataset = AirbusShipDetectionTestDataset(images_dir=test_imgs_dir, image_names=os.listdir(test_imgs_dir))
@@ -43,8 +43,8 @@ if __name__ == '__main__':
 
         predicted_mask = predicted_mask.detach().cpu().numpy()
 
-        predicted_mask = predicted_mask > 0.5
-        predicted_mask = predicted_mask.astype(np.uint8) * 255
+        predicted_mask = predicted_mask * 255
+        predicted_mask = predicted_mask.astype(np.uint8)
         save_path = os.path.join(predictions_save_dir, image_name)
 
         save_pool.apply_async(cv2.imwrite, (save_path, predicted_mask))
