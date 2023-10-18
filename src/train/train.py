@@ -1,20 +1,20 @@
 import json
 import os
 import random
-from typing import Tuple, Optional
+from typing import Tuple
 
 import lightning.pytorch as pl
 import numpy as np
 import torch
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 from src.data.AirbusShipDetectionDataset import AirbusShipDetectionDataset
 from src.model.Unet import Unet
 from src.train.AirbusShipDetectorTrainingWrapper import AirbusShipDetectorTrainingWrapper
 
 
-def init_train_val_from_meta_info(data_root: str, crop_hw: Optional[Tuple[int, int]]) -> Tuple[Dataset, Dataset]:
+def init_train_val_from_meta_info(data_root: str) -> Tuple[AirbusShipDetectionDataset, AirbusShipDetectionDataset]:
     images_dir = os.path.join(data_root, 'train_v2')
     train_file = os.path.join(data_root, 'train.json')
     with open(train_file, 'r') as file:
@@ -25,11 +25,9 @@ def init_train_val_from_meta_info(data_root: str, crop_hw: Optional[Tuple[int, i
         val_state = json.load(file)
 
     train_dataset = AirbusShipDetectionDataset.from_state(state=train_state,
-                                                          images_dir=images_dir,
-                                                          crop_hw=crop_hw)
+                                                          images_dir=images_dir)
     val_dataset = AirbusShipDetectionDataset.from_state(state=val_state,
-                                                        images_dir=images_dir,
-                                                        crop_hw=crop_hw)
+                                                        images_dir=images_dir)
 
     return train_dataset, val_dataset
 
@@ -37,10 +35,8 @@ def init_train_val_from_meta_info(data_root: str, crop_hw: Optional[Tuple[int, i
 def split_and_save_dataset(data_root: str):
     images_dir = os.path.join(data_root, 'train_v2')
     annotations_file = os.path.join(data_root, 'train_ship_segmentations_v2.csv')
-    dataset = AirbusShipDetectionDataset.initialize(
-        images_dir=images_dir,
-        annotations_file=annotations_file,
-        crop_hw=(256, 256))
+    dataset = AirbusShipDetectionDataset.initialize(images_dir=images_dir,
+                                                    annotations_file=annotations_file)
     train_dataset, val_dataset = dataset.split_train_val(train_percent=0.9)
 
     train_file = os.path.join(data_root, 'train.json')
@@ -66,8 +62,8 @@ if __name__ == '__main__':
     unet = Unet(init_channels=32, residual_block=True, inference=False)
     detector = AirbusShipDetectorTrainingWrapper(unet)
 
-    train_dataset, val_dataset = init_train_val_from_meta_info(r'D:\Data\airbus-ship-detection',
-                                                               crop_hw=(256, 256))
+    train_dataset, val_dataset = init_train_val_from_meta_info(r'D:\Data\airbus-ship-detection')
+    train_dataset.set_crop_hw((256, 256))
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True,
                               persistent_workers=True, worker_init_fn=worker_init_fn)

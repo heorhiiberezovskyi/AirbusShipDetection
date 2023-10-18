@@ -29,14 +29,13 @@ def to_dict(table: DataFrame) -> Dict[str, List[str]]:
 
 
 class AirbusShipDetectionDataset(Dataset):
-    def __init__(self, images_dir: str, image_names: List[str], ship_encodings: Dict[str, List[str]],
-                 crop_hw: Optional[Tuple[int, int]]):
+    def __init__(self, images_dir: str, image_names: List[str], ship_encodings: Dict[str, List[str]]):
         self._images_dir = images_dir
 
         self._image_names = image_names
         self._ships_encodings = ship_encodings
 
-        self._crop_hw = crop_hw
+        self._crop_hw: Optional[Tuple[int, int]] = None
 
         self._image_names_with_ships = list(ship_encodings.keys())
         self._image_names_without_ships = list(set(image_names).difference(self._image_names_with_ships))
@@ -53,6 +52,10 @@ class AirbusShipDetectionDataset(Dataset):
 
         self._center_crop_random_shift = 0.3
         self._image_hw = (768, 768)
+
+    def set_crop_hw(self, crop_hw: Tuple[int, int]):
+        assert self._crop_hw is None
+        self._crop_hw = crop_hw
 
     def __len__(self):
         return len(self._image_names)
@@ -173,12 +176,12 @@ class AirbusShipDetectionDataset(Dataset):
                 raise AssertionError('')
         train = AirbusShipDetectionDataset(images_dir=self._images_dir,
                                            image_names=train_image_names,
-                                           ship_encodings=train_encodings,
-                                           crop_hw=self._crop_hw)
+                                           ship_encodings=train_encodings)
+        train._crop_hw = self._crop_hw
         val = AirbusShipDetectionDataset(images_dir=self._images_dir,
                                          image_names=val_image_names,
-                                         ship_encodings=val_encodings,
-                                         crop_hw=self._crop_hw)
+                                         ship_encodings=val_encodings)
+        val._crop_hw = self._crop_hw
         return train, val
 
     def get_state(self) -> dict:
@@ -186,21 +189,18 @@ class AirbusShipDetectionDataset(Dataset):
                 'ship_encodings': self._ships_encodings.copy()}
 
     @classmethod
-    def from_state(cls, state: dict, images_dir: str, crop_hw: Optional[Tuple[int, int]]) \
-            -> AirbusShipDetectionDataset:
+    def from_state(cls, state: dict, images_dir: str) -> AirbusShipDetectionDataset:
         image_names = state['image_names']
         ship_encodings = state['ship_encodings']
         return AirbusShipDetectionDataset(images_dir=images_dir,
                                           image_names=image_names,
-                                          ship_encodings=ship_encodings,
-                                          crop_hw=crop_hw)
+                                          ship_encodings=ship_encodings)
 
     @classmethod
-    def initialize(cls, images_dir: str, annotations_file: str, crop_hw: Optional[Tuple[int, int]]) \
-            -> AirbusShipDetectionDataset:
+    def initialize(cls, images_dir: str, annotations_file: str) -> AirbusShipDetectionDataset:
         table = pd.read_csv(annotations_file, sep=',')
 
         image_names = table['ImageId'].unique().tolist()
         ships_encodings = to_dict(table)
         return AirbusShipDetectionDataset(images_dir=images_dir, image_names=image_names,
-                                          ship_encodings=ships_encodings, crop_hw=crop_hw)
+                                          ship_encodings=ships_encodings)
