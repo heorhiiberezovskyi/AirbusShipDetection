@@ -143,10 +143,10 @@ class AirbusShipDetectionDataset(Dataset):
 
         if self._crop_hw is not None:
             image, mask = self._random_crop(image=image, mask=mask)
+            assert image.shape[:2] == self._crop_hw
+            assert mask.shape[:2] == self._crop_hw
 
         image, mask = self._apply_augmentations(image=image, mask=mask)
-        assert image.shape[:2] == self._crop_hw
-        assert mask.shape[:2] == self._crop_hw
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_tensor = torch.from_numpy(np.transpose(image, (2, 0, 1)))
