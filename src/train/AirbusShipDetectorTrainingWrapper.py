@@ -1,8 +1,10 @@
 import lightning.pytorch as pl
 import torch
+
 from torch import Tensor
 from torch import nn
 from torch import optim
+from torchvision.ops import sigmoid_focal_loss
 
 
 class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
@@ -10,27 +12,28 @@ class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
         super().__init__()
         self.ships_segmentor = ships_segmentor
 
-        self.loss = nn.BCELoss()
+        self._alpha = 0.25
+        self._gamma = 2
 
     def training_step(self, batch, batch_idx):
         images = batch['image']
         gt_masks = batch['mask'].float()
 
-        pred_mask = self.ships_segmentor(images)
+        pred_mask_logits = self.ships_segmentor(images)
 
-        dice = self.dice_coefficient(pred_mask, gt_masks)
+        dice = self.dice_coefficient(torch.sigmoid(pred_mask_logits), gt_masks)
         self.log("train_dice_coefficient", dice)
 
         dice_loss = 1 - dice
         self.log("train_dice_loss", dice_loss)
 
-        bce = self.loss(pred_mask, gt_masks)
-        self.log("train_bce_loss", bce)
+        focal_loss = sigmoid_focal_loss(inputs=pred_mask_logits, targets=gt_masks,
+                                        alpha=self._alpha, gamma=self._gamma,
+                                        reduction='mean')
+        self.log("train_focal_loss", focal_loss)
 
-        loss = bce + dice_loss
+        loss = focal_loss + dice_loss
         self.log("train_loss", loss)
-
-        self.log('lr', self.optimizers().optimizer.param_groups[0]['lr'])
         return loss
 
     @staticmethod
@@ -44,20 +47,21 @@ class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
         images = batch['image']
         gt_masks = batch['mask'].float()
 
-        pred_mask = self.ships_segmentor(images)
+        pred_mask_logits = self.ships_segmentor(images)
 
-        dice = self.dice_coefficient(pred_mask, gt_masks)
+        dice = self.dice_coefficient(torch.sigmoid(pred_mask_logits), gt_masks)
         self.log("val_dice_coefficient", dice)
 
         dice_loss = 1 - dice
         self.log("val_dice_loss", dice_loss)
 
-        bce = self.loss(pred_mask, gt_masks)
-        self.log("val_bce_loss", bce)
+        focal_loss = sigmoid_focal_loss(inputs=pred_mask_logits, targets=gt_masks,
+                                        alpha=self._alpha, gamma=self._gamma,
+                                        reduction='mean')
+        self.log("val_focal_loss", focal_loss)
 
-        loss = dice_loss + bce
+        loss = focal_loss + dice_loss
         self.log('val_loss', loss)
-
         return loss
 
     def configure_optimizers(self):

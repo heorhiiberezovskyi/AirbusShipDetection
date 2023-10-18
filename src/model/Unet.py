@@ -1,4 +1,3 @@
-import torch
 from torch import nn, Tensor
 
 from src.model.Blocks import ImageNetNorm, DoubleConvBlock, EncoderDownModule, DecoderUpFuseModule
@@ -41,6 +40,4 @@ class Unet(nn.Module):
         decoder_1 = self.dec1(decoder_2, encoder_1)
 
         out = self.out(decoder_1)
-
-        out = torch.sigmoid(out)
         return out
