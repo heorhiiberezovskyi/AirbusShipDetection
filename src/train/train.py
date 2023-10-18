@@ -63,7 +63,7 @@ def worker_init_fn(worker_id):
 if __name__ == '__main__':
     # split_and_save_dataset(r'D:\Data\airbus-ship-detection')
 
-    unet = Unet(init_channels=32, residual_block=True)
+    unet = Unet(init_channels=32, residual_block=True, inference=False)
     detector = AirbusShipDetectorTrainingWrapper(unet)
 
     train_dataset, val_dataset = init_train_val_from_meta_info(r'D:\Data\airbus-ship-detection',

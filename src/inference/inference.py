@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     state = torch.load(checkpoint)
 
-    unet = Unet(init_channels=32, residual_block=True)
+    unet = Unet(init_channels=32, residual_block=True, inference=True)
     unet.eval()
     unet.cuda()
     wrapper = AirbusShipDetectorTrainingWrapper(ships_segmentor=unet)
