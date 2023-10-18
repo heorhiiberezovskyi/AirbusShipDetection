@@ -70,7 +70,6 @@ if __name__ == '__main__':
     val_loader = DataLoader(dataset=val_dataset, batch_size=32, shuffle=False, num_workers=6, pin_memory=True,
                             persistent_workers=True)
 
-    # train the model (hint: here are some helpful Trainer arguments for rapid idea iteration)
     trainer = pl.Trainer(max_epochs=5, logger=[CSVLogger(os.getcwd()), TensorBoardLogger(os.getcwd())],
                          enable_progress_bar=True, enable_checkpointing=True,
                          val_check_interval=0.25, log_every_n_steps=10)
