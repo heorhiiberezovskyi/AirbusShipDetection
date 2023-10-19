@@ -25,12 +25,9 @@ def init_train_val_from_meta_info(data_root: str) -> Tuple[AirbusShipDetectionDa
     with open(val_file, 'r') as file:
         val_state = json.load(file)
 
-    train_dataset = AirbusShipDetectionDataset.from_state(state=train_state,
-                                                          images_dir=images_dir)
-    val_dataset = AirbusShipDetectionDataset.from_state(state=val_state,
-                                                        images_dir=images_dir)
-
-    return train_dataset, val_dataset
+    train = AirbusShipDetectionDataset.from_state(state=train_state, images_dir=images_dir)
+    val = AirbusShipDetectionDataset.from_state(state=val_state, images_dir=images_dir)
+    return train, val
 
 
 def worker_init_fn(worker_id):
