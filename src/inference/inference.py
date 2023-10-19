@@ -48,3 +48,6 @@ if __name__ == '__main__':
         save_path = os.path.join(predictions_save_dir, image_name)
 
         save_pool.apply_async(cv2.imwrite, (save_path, predicted_mask))
+
+    save_pool.close()
+    save_pool.join()
