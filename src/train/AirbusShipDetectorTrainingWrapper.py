@@ -1,5 +1,7 @@
 import lightning.pytorch as pl
 import torch
+from torch.nn import functional as F
+
 
 from torch import Tensor
 from torch import nn
@@ -27,12 +29,17 @@ class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
         dice_loss = 1 - dice
         self.log("train_dice_loss", dice_loss)
 
+        bce_loss = F.binary_cross_entropy_with_logits(input=pred_mask_logits,
+                                                      target=gt_masks,
+                                                      reduction='mean')
+        self.log('train_bce_loss', bce_loss)
+
         focal_loss = sigmoid_focal_loss(inputs=pred_mask_logits, targets=gt_masks,
                                         alpha=self._alpha, gamma=self._gamma,
                                         reduction='mean')
         self.log("train_focal_loss", focal_loss)
 
-        loss = focal_loss + dice_loss
+        loss = focal_loss + dice_loss + bce_loss
         self.log("train_loss", loss)
         return loss
 
@@ -55,12 +62,17 @@ class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
         dice_loss = 1 - dice
         self.log("val_dice_loss", dice_loss)
 
+        bce_loss = F.binary_cross_entropy_with_logits(input=pred_mask_logits,
+                                                      target=gt_masks,
+                                                      reduction='mean')
+        self.log('val_bce_loss', bce_loss)
+
         focal_loss = sigmoid_focal_loss(inputs=pred_mask_logits, targets=gt_masks,
                                         alpha=self._alpha, gamma=self._gamma,
                                         reduction='mean')
         self.log("val_focal_loss", focal_loss)
 
-        loss = focal_loss + dice_loss
+        loss = focal_loss + dice_loss + bce_loss
         self.log('val_loss', loss)
         return loss
 
