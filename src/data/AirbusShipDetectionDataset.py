@@ -6,27 +6,12 @@ from typing import Dict, List, Tuple, Optional
 
 import cv2
 import numpy as np
-import pandas as pd
 import torch
 from numpy import ndarray
-from pandas import DataFrame
 from torch.utils.data import Dataset
 
 from src.data.MaskDecoder import MaskDecoder
 from src.data.SampleTransform import SampleTransform
-
-
-def to_dict(table: DataFrame) -> Dict[str, List[str]]:
-    state_dict = {}
-    not_nan = table['EncodedPixels'].notna()
-    for index, row in table[not_nan].iterrows():
-        image_id = row['ImageId']
-        if image_id not in state_dict.keys():
-            state_dict[image_id] = []
-        na = row.isna()
-        if not na['EncodedPixels']:
-            state_dict[image_id].append(row['EncodedPixels'])
-    return state_dict
 
 
 class AirbusShipDetectionDataset(Dataset):
@@ -149,13 +134,3 @@ class AirbusShipDetectionDataset(Dataset):
         return AirbusShipDetectionDataset(images_dir=images_dir,
                                           image_names=image_names,
                                           ship_encodings=ship_encodings)
-
-    @classmethod
-    def initialize(cls, images_dir: str, annotations_file: str) -> AirbusShipDetectionDataset:
-        table = pd.read_csv(annotations_file, sep=',')
-
-        image_names = table['ImageId'].unique().tolist()
-        ships_encodings = to_dict(table)
-        return AirbusShipDetectionDataset(images_dir=images_dir,
-                                          image_names=image_names,
-                                          ship_encodings=ships_encodings)
