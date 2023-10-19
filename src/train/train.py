@@ -10,6 +10,7 @@ from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from torch.utils.data import DataLoader
 
 from src.data.AirbusShipDetectionDataset import AirbusShipDetectionDataset
+from src.data.ShipCenteredCrop import ShipCenteredCrop
 from src.model.Unet import Unet
 from src.train.AirbusShipDetectorTrainingWrapper import AirbusShipDetectorTrainingWrapper
 
@@ -32,23 +33,6 @@ def init_train_val_from_meta_info(data_root: str) -> Tuple[AirbusShipDetectionDa
     return train_dataset, val_dataset
 
 
-def split_and_save_dataset(data_root: str):
-    images_dir = os.path.join(data_root, 'train_v2')
-    annotations_file = os.path.join(data_root, 'train_ship_segmentations_v2.csv')
-    dataset = AirbusShipDetectionDataset.initialize(images_dir=images_dir,
-                                                    annotations_file=annotations_file)
-    train_dataset, val_dataset = dataset.split_train_val(train_percent=0.9)
-
-    train_file = os.path.join(data_root, 'train.json')
-    val_file = os.path.join(data_root, 'val.json')
-
-    with open(train_file, 'w') as file:
-        json.dump(train_dataset.get_state(), file)
-
-    with open(val_file, 'w') as file:
-        json.dump(val_dataset.get_state(), file)
-
-
 def worker_init_fn(worker_id):
     seed = torch.initial_seed() % (2 ** 32 - 1)
     print('Worker ' + str(worker_id) + ' seed set to ' + str(seed))
@@ -57,8 +41,6 @@ def worker_init_fn(worker_id):
 
 
 if __name__ == '__main__':
-    # split_and_save_dataset(r'D:\Data\airbus-ship-detection')
-
     # 4_5 - focal + dice
     # 6_7 - + bce
 
@@ -66,7 +48,10 @@ if __name__ == '__main__':
     detector = AirbusShipDetectorTrainingWrapper(unet)
 
     train_dataset, val_dataset = init_train_val_from_meta_info(r'D:\Data\airbus-ship-detection')
-    train_dataset.set_crop_hw((256, 256))
+
+    # Set centered crop transform to train dataset, perform validation in original size.
+    transform = ShipCenteredCrop(hw=(256, 256), center_crop_random_shift=0.3)
+    train_dataset.set_sample_transform(transform)
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True,
                               persistent_workers=True, worker_init_fn=worker_init_fn)
