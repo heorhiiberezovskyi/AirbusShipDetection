@@ -59,6 +59,9 @@ def worker_init_fn(worker_id):
 if __name__ == '__main__':
     # split_and_save_dataset(r'D:\Data\airbus-ship-detection')
 
+    # 4_5 - focal + dice
+    # 6_7 - + bce
+
     unet = Unet(init_channels=32, residual_block=True, inference=False)
     detector = AirbusShipDetectorTrainingWrapper(unet)
 
@@ -67,10 +70,11 @@ if __name__ == '__main__':
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True,
                               persistent_workers=True, worker_init_fn=worker_init_fn)
-    val_loader = DataLoader(dataset=val_dataset, batch_size=32, shuffle=False, num_workers=6, pin_memory=True,
+    val_loader = DataLoader(dataset=val_dataset, batch_size=16, shuffle=True, num_workers=4, pin_memory=True,
                             persistent_workers=True)
 
     trainer = pl.Trainer(max_epochs=5, logger=[CSVLogger(os.getcwd()), TensorBoardLogger(os.getcwd())],
                          enable_progress_bar=True, enable_checkpointing=True,
-                         val_check_interval=0.25, log_every_n_steps=10)
+                         val_check_interval=0.25, log_every_n_steps=10,
+                         limit_val_batches=200)
     trainer.fit(model=detector, train_dataloaders=train_loader, val_dataloaders=val_loader)
