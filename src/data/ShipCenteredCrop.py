@@ -49,6 +49,8 @@ class ShipCenteredCrop(SampleTransform):
         return x, y
 
     def apply(self, image: ndarray, mask: ndarray) -> Tuple[ndarray, ndarray]:
+        if image.shape[:2] == self._hw:
+            return image, mask
         x0, y0, x1, y1 = self._get_random_crop_x0y0x1y1(image, mask)
         img_crop = image[y0: y1, x0: x1]
         mask_crop = mask[y0: y1, x0: x1]
