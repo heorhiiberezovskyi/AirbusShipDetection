@@ -20,6 +20,8 @@ class AirbusShipDetectionDataset(Dataset):
         self._image_names = image_names
         self._ships_encodings = ship_encodings
 
+        self._image_hw = (768, 768)
+
         self._transform: Optional[SampleTransform] = None
 
         self._image_names_with_ships = list(ship_encodings.keys())
@@ -29,12 +31,10 @@ class AirbusShipDetectionDataset(Dataset):
         print('With ships: %s' % len(self._image_names_with_ships))
         print('Without ships: %s' % len(self._image_names_without_ships))
 
-        self._mask_decoder = MaskDecoder(image_hw=(768, 768))
+        self._mask_decoder = MaskDecoder(image_hw=self._image_hw)
 
         self._rotate_prob = 0.5
         self._flip_prob = 0.5
-
-        self._image_hw = (768, 768)
 
     def set_sample_transform(self, transform: SampleTransform):
         assert self._transform is None
