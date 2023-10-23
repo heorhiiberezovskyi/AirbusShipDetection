@@ -96,7 +96,7 @@ class AirbusShipDetectionDataset(Dataset):
         image_tensor = torch.from_numpy(np.transpose(image, (2, 0, 1)))
         mask_tensor = torch.from_numpy(np.transpose(np.expand_dims(mask, 2), (2, 0, 1))).long()
 
-        sample = {'image': image_tensor, 'mask': mask_tensor, 'img_name': image_name}
+        sample = {'image': image_tensor, 'mask': mask_tensor, 'image_name': image_name}
         return sample
 
     def get_state(self) -> dict:
