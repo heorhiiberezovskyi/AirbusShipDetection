@@ -31,7 +31,6 @@ class AirbusShipDetectionDataset(Dataset):
 
         self._mask_decoder = MaskDecoder(image_hw=(768, 768))
 
-        self._do_augmentations: bool = True
         self._rotate_prob = 0.5
         self._flip_prob = 0.5
 
@@ -40,10 +39,6 @@ class AirbusShipDetectionDataset(Dataset):
     def set_sample_transform(self, transform: SampleTransform):
         assert self._transform is None
         self._transform = transform
-
-    def disable_augmentations(self):
-        assert self._do_augmentations is True
-        self._do_augmentations = False
 
     def __len__(self):
         return len(self._image_names)
@@ -89,8 +84,7 @@ class AirbusShipDetectionDataset(Dataset):
         if self._transform is not None:
             image, mask = self._transform.apply(image=image, mask=mask)
 
-        if self._do_augmentations:
-            image, mask = self._apply_augmentations(image=image, mask=mask)
+        image, mask = self._apply_augmentations(image=image, mask=mask)
 
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_tensor = torch.from_numpy(np.transpose(image, (2, 0, 1)))
