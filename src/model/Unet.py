@@ -1,14 +1,11 @@
-import torch
 from torch import nn, Tensor
 
 from src.model.Blocks import ImageNetNorm, DoubleConvBlock, EncoderDownModule, DecoderUpFuseModule
 
 
 class Unet(nn.Module):
-    def __init__(self, init_channels: int, residual_block: bool, inference: bool):
+    def __init__(self, init_channels: int, residual_block: bool):
         super().__init__()
-        self._inference = inference
-
         self._init_channels = init_channels
         self._residual_block = residual_block
 
@@ -43,7 +40,4 @@ class Unet(nn.Module):
         decoder_1 = self.dec1(decoder_2, encoder_1)
 
         out = self.out(decoder_1)
-
-        if self._inference:
-            out = torch.sigmoid(out)
         return out
