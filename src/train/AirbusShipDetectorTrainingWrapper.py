@@ -1,11 +1,9 @@
 import lightning.pytorch as pl
 import torch
-from torch.nn import functional as F
-
-
 from torch import Tensor
 from torch import nn
 from torch import optim
+from torch.nn import functional as F
 from torchvision.ops import sigmoid_focal_loss
 
 
@@ -53,8 +51,14 @@ class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         images = batch['image']
         gt_masks = batch['mask'].float()
+        assert tuple(gt_masks.size()[2:]) == (768, 768)
 
         pred_mask_logits = self.ships_segmentor(images)
+
+        if tuple(pred_mask_logits.size()[2:]) != (768, 768):
+            scale_factor = 768 / pred_mask_logits.size()[2]
+            pred_mask_logits = F.interpolate(pred_mask_logits, scale_factor=scale_factor, mode='bilinear')
+            assert tuple(pred_mask_logits.size()[2:]) == (768, 768)
 
         dice = self.dice_coefficient(torch.sigmoid(pred_mask_logits), gt_masks)
         self.log("val_dice_coefficient", dice)
