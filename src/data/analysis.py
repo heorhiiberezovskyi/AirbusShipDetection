@@ -3,7 +3,7 @@ from typing import Dict, List
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from src.data.AirbusShipDetectionDataset import to_dict
+from src.data.prepare_for_training import to_dict
 
 
 def get_ships_counts(encoded_pixels: Dict[str, List[str]], image_ids: List[str]) -> Dict[int, int]:
