@@ -112,9 +112,10 @@ class AirbusShipDetectionDataset(Dataset):
                 'ship_encodings': self._ships_encodings.copy()}
 
     @classmethod
-    def from_state(cls, state: dict, images_dir: str) -> AirbusShipDetectionDataset:
+    def from_state(cls, state: dict, images_dir: str, balanced_sampling: bool) -> AirbusShipDetectionDataset:
         image_names = state['image_names']
         ship_encodings = state['ship_encodings']
         return AirbusShipDetectionDataset(images_dir=images_dir,
                                           image_names=image_names,
-                                          ship_encodings=ship_encodings)
+                                          ship_encodings=ship_encodings,
+                                          balanced_sampling=balanced_sampling)
