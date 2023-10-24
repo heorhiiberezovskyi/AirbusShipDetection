@@ -14,11 +14,14 @@ from src.data.SampleTransform import SampleTransform
 
 
 class AirbusShipDetectionDataset(Dataset):
-    def __init__(self, images_dir: str, image_names: List[str], ship_encodings: Dict[str, List[str]]):
+    def __init__(self, images_dir: str, image_names: List[str], ship_encodings: Dict[str, List[str]],
+                 balanced_sampling: bool):
         self._images_dir = images_dir
 
         self._image_names = image_names
         self._ships_encodings = ship_encodings
+
+        self._balanced_sampling = balanced_sampling
 
         self._image_hw = (768, 768)
 
@@ -54,6 +57,14 @@ class AirbusShipDetectionDataset(Dataset):
             image_name = self._image_names_without_ships[image_name_without_ship_idx]
         return image_name, ship_encodings
 
+    def _get_random_image_name_and_ship_encodings(self, index: int) -> Tuple[str, List[str]]:
+        ship_encodings = []
+        image_name = self._image_names[index]
+        if image_name in self._ships_encodings.keys():
+            assert image_name in self._image_names_with_ships
+            ship_encodings = self._ships_encodings[image_name]
+        return image_name, ship_encodings
+
     def _apply_augmentations(self, image: ndarray, mask: ndarray) -> Tuple[ndarray, ndarray]:
         do_rotate = np.random.rand() < self._rotate_prob
         if do_rotate:
@@ -70,7 +81,10 @@ class AirbusShipDetectionDataset(Dataset):
         return image, mask
 
     def __getitem__(self, index):
-        image_name, ship_encodings = self._get_random_balanced_image_name_and_ship_encodings(index)
+        if self._balanced_sampling:
+            image_name, ship_encodings = self._get_random_balanced_image_name_and_ship_encodings(index)
+        else:
+            image_name, ship_encodings = self._get_random_image_name_and_ship_encodings(index)
 
         image_path = os.path.join(self._images_dir, image_name)
         image = cv2.imread(image_path)
