@@ -15,10 +15,12 @@ from src.model.Unet import Unet
 from src.train.AirbusShipDetectorTrainingWrapper import AirbusShipDetectorTrainingWrapper
 
 
-def init_from_meta_info(images_dir: str, annotations_json: str) -> AirbusShipDetectionDataset:
+def init_from_meta_info(images_dir: str, annotations_json: str, balanced_sampling: bool) -> AirbusShipDetectionDataset:
     with open(annotations_json, 'r') as file:
         state = json.load(file)
-    return AirbusShipDetectionDataset.from_state(state=state, images_dir=images_dir)
+    return AirbusShipDetectionDataset.from_state(state=state,
+                                                 images_dir=images_dir,
+                                                 balanced_sampling=balanced_sampling)
 
 
 def worker_init_fn(worker_id):
@@ -29,21 +31,26 @@ def worker_init_fn(worker_id):
 
 
 if __name__ == '__main__':
+    # sampling: balanced
     # 4_5 - focal + dice
     # 6_7 - + bce
     # 8_9 - resize to 256
     # 10_11 - random resize from 768 to 384 and ship centered crop
     # 12_13 - random resize from 768 to 384 and random crop
     # 14_15 - random resize from 768 to 256 and ship centered crop
+    # 20_21 - resize to 256
+    # 22_23 - resize to 256, random sampling
 
-    unet = Unet(init_channels=32, residual_block=True, inference=False)
+    unet = Unet(init_channels=32, residual_block=True)
     detector = AirbusShipDetectorTrainingWrapper(unet)
 
     images_root = r'D:\Data\airbus-ship-detection\train_v2'
     train_dataset = init_from_meta_info(images_dir=images_root,
-                                        annotations_json=r'D:\Data\airbus-ship-detection\train.json')
+                                        annotations_json=r'D:\Data\airbus-ship-detection\train.json',
+                                        balanced_sampling=False)
     val_dataset = init_from_meta_info(images_dir=images_root,
-                                      annotations_json=r'D:\Data\airbus-ship-detection\val.json')
+                                      annotations_json=r'D:\Data\airbus-ship-detection\val.json',
+                                      balanced_sampling=False)
 
     # Set centered crop transform to train dataset, perform validation in original size.
     # crop = ShipCenteredCrop(hw=(256, 256), center_crop_random_shift=0.3)
