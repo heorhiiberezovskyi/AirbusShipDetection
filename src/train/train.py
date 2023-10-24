@@ -50,7 +50,7 @@ if __name__ == '__main__':
                                         balanced_sampling=False)
     val_dataset = init_from_meta_info(images_dir=images_root,
                                       annotations_json=r'D:\Data\airbus-ship-detection\val.json',
-                                      balanced_sampling=False)
+                                      balanced_sampling=True)
 
     # Set centered crop transform to train dataset, perform validation in original size.
     # crop = ShipCenteredCrop(hw=(256, 256), center_crop_random_shift=0.3)
