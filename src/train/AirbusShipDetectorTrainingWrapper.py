@@ -55,6 +55,7 @@ class AirbusShipDetectorTrainingWrapper(pl.LightningModule):
 
         pred_mask_logits = self.ships_segmentor(images)
 
+        # Calculate validation metrics on original size images.
         if tuple(pred_mask_logits.size()[2:]) != (768, 768):
             scale_factor = 768 / pred_mask_logits.size()[2]
             pred_mask_logits = F.interpolate(pred_mask_logits, scale_factor=scale_factor, mode='bilinear')
