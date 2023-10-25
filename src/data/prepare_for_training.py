@@ -50,11 +50,13 @@ def split_and_save_dataset(data_root: str, train_percent: float = 0.9):
 
     train_dataset = AirbusShipDetectionDataset(images_dir=images_dir,
                                                image_names=train_image_names,
-                                               ship_encodings=train_encodings)
+                                               ship_encodings=train_encodings,
+                                               balanced_sampling=True)
 
     val_dataset = AirbusShipDetectionDataset(images_dir=images_dir,
                                              image_names=val_image_names,
-                                             ship_encodings=val_encodings)
+                                             ship_encodings=val_encodings,
+                                             balanced_sampling=True)
 
     train_file = os.path.join(data_root, 'train.json')
     val_file = os.path.join(data_root, 'val.json')
