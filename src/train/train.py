@@ -10,8 +10,8 @@ from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from torch.utils.data import DataLoader
 
 from src.data.AirbusShipDetectionDataset import AirbusShipDetectionDataset
-from src.data.ResizeImageMask import ResizeImageMask
-from src.data.ResizeImageOnly import ResizeImageOnly
+from src.data.sample_transform.ResizeImageMask import ResizeImageMask
+from src.data.sample_transform.ResizeImageOnly import ResizeImageOnly
 from src.model.Unet import Unet
 from src.train.AirbusShipDetectorTrainingWrapper import AirbusShipDetectorTrainingWrapper
 

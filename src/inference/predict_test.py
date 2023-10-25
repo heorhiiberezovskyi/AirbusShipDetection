@@ -11,7 +11,7 @@ from torch import Tensor
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
-from src.data.ResizeImageOnly import ResizeImageOnly
+from src.data.sample_transform.ResizeImageOnly import ResizeImageOnly
 from src.inference.AirbusShipDetectionTestDataset import AirbusShipDetectionTestDataset
 from src.model.Unet import Unet
 from src.train.AirbusShipDetectorTrainingWrapper import AirbusShipDetectorTrainingWrapper
