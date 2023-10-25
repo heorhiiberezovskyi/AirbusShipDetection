@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 from multiprocessing.pool import ThreadPool
@@ -79,16 +80,21 @@ def calculate_metrics(counts: dict, eps: float = 1e-8) -> dict:
             'specificity': specificity}
 
 
-if __name__ == '__main__':
-    chkpt = r'C:\Users\gosha\PycharmProjects\AirbusShipDetection\src\train\lightning_logs\version_10\checkpoints\epoch=4-step=27080.ckpt'
-    predictions_save_dir = r'D:\Data\airbus-ship-detection\predictions_10_512'
+def main(args):
+    predictions_save_dir = args.save_dir
     os.makedirs(predictions_save_dir, exist_ok=True)
 
-    val_dataset = init_from_meta_info(images_dir=r'D:\Data\airbus-ship-detection\train_v2',
-                                      annotations_json=r'D:\Data\airbus-ship-detection\val.json')
-    val_dataset.set_sample_transform(ResizeImageOnly((512, 512)))
+    val_dataset = init_from_meta_info(images_dir=args.images_dir, annotations_json=args.annotations_json)
 
-    model = load_and_prepare_unet(chkpt)
+    predictions_upsample_factor = None
+    if args.input_resolution is not None:
+        val_dataset.set_sample_transform(ResizeImageOnly((args.input_resolution, args.input_resolution)))
+        predictions_upsample_factor = 768 / args.input_resolution
+        print('Predicting in different resolution: %s' % args.input_resolution)
+    else:
+        print('Predicting in original resolution...')
+
+    model = load_and_prepare_unet(args.ckpt)
 
     data_loader = DataLoader(dataset=val_dataset, batch_size=1, shuffle=False, num_workers=6,
                              pin_memory=True, persistent_workers=True)
@@ -104,7 +110,10 @@ if __name__ == '__main__':
         with torch.no_grad():
             pred_mask_logits = model(image)
 
-            pred_mask_logits = F.interpolate(pred_mask_logits, scale_factor=1.5, mode='bilinear')
+            if predictions_upsample_factor is not None:
+                pred_mask_logits = F.interpolate(pred_mask_logits, scale_factor=predictions_upsample_factor,
+                                                 mode='bilinear')
+
             predicted_mask = torch.sigmoid(pred_mask_logits)[0][0]
 
             assert tuple(predicted_mask.size()) == (768, 768)
@@ -138,3 +147,15 @@ if __name__ == '__main__':
     metrics = calculate_metrics(counts=total_counts)
     with open(os.path.join(predictions_save_dir, 'metrics_avg.json'), 'w') as file:
         json.dump(metrics, file)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Eval model and calculate metrics on validation set.')
+    parser.add_argument("--input_resolution", type=str, default=None,
+                        help="Resolution to run inference on. If None, use original images resolution")
+    parser.add_argument("--ckpt", type=str, help="path to snapshot in .ckpt format")
+    parser.add_argument("--save_dir", type=str, help="Directory to dump predictions and metrics.")
+    parser.add_argument("--images_dir", type=str, help="Directory with images to evaluate on.")
+    parser.add_argument("--annotations_json", type=str, help="Path to JSON file with ship segmentations annotations")
+    _args = parser.parse_args()
+    main(_args)
