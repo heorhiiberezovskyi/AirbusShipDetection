@@ -3,7 +3,7 @@ from typing import Tuple
 import cv2
 from numpy import ndarray
 
-from src.data.SampleTransform import SampleTransform
+from src.data.sample_transform.SampleTransform import SampleTransform
 
 
 class ResizeImageOnly(SampleTransform):

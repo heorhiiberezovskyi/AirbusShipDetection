@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from numpy import ndarray
 
-from src.data.SampleTransform import SampleTransform
+from src.data.sample_transform.SampleTransform import SampleTransform
 
 
 class RandomResizeCrop(SampleTransform):

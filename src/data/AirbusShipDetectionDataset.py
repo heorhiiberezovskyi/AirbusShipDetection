@@ -10,7 +10,7 @@ from numpy import ndarray
 from torch.utils.data import Dataset
 
 from src.data.MaskDecoder import MaskDecoder
-from src.data.SampleTransform import SampleTransform
+from src.data.sample_transform.SampleTransform import SampleTransform
 
 
 class AirbusShipDetectionDataset(Dataset):

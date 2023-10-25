@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 from numpy import ndarray
 
-from src.data.SampleTransform import SampleTransform
+from src.data.sample_transform.SampleTransform import SampleTransform
 
 
 class RandomCrop(SampleTransform):
