@@ -29,3 +29,5 @@ Sampling: Balanced
 Run src/inference/predict_test.py to inference predictions and calculate metrics
 
 ## Analyse training distribution via [Jupyter Notebook](https://github.com/heorhiiberezovskyi/AirbusShipDetection/blob/main/AirbusShipDetectionDataAnalysis.ipynb)
+
+## Logs and checkpoints can be found on [Google Drive](https://drive.google.com/drive/folders/1JHFlDxpcyJFq9DXmUOe1uX-jaAc4uOmC?usp=sharing)
