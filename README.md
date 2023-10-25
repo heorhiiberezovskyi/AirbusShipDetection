@@ -27,3 +27,5 @@ Sampling: Balanced
 
 ## To Eval
 Run src/inference/predict_test.py to inference predictions and calculate metrics
+
+## Analyse training distribution via [Jupyter Notebook](https://github.com/heorhiiberezovskyi/AirbusShipDetection/blob/main/AirbusShipDetectionDataAnalysis.ipynb)
