@@ -33,8 +33,10 @@ def worker_init_fn(worker_id):
 
 def main(args):
     if args.precision == 'tf32_high':
+        print('Training in tf32 high precision')
         torch.set_float32_matmul_precision('high')
     elif args.precision != 'fp32':
+        print('Training in fp32 precision')
         raise NotImplementedError('')
 
     unet = Unet(init_channels=32, residual_block=True)
@@ -77,6 +79,7 @@ if __name__ == '__main__':
     # 20_21 - resize to 256
     # 22_23 - resize to 256, random sampling
     # 24_25 - random resize from 768 to 256 and ship centered crop
+    # 26_27 - resize to 256, tf_32 high
 
     parser = argparse.ArgumentParser(description='Train for 5 epochs.')
     parser.add_argument("--images_dir", type=str, help="Directory with images to train on.")
