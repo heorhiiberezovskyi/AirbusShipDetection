@@ -33,7 +33,7 @@ def worker_init_fn(worker_id):
 
 def main(args):
     if args.precision == 'tf32_high':
-        torch.set_float32_matmul_precision(args.precision)
+        torch.set_float32_matmul_precision('high')
     elif args.precision != 'fp32':
         raise NotImplementedError('')
 
