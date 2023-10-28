@@ -10,8 +10,9 @@ from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from torch.utils.data import DataLoader
 
 from src.data.AirbusShipDetectionDataset import AirbusShipDetectionDataset
-from src.data.sample_transform.ResizeImageMask import ResizeImageMask
+from src.data.sample_transform.RandomResizeCrop import RandomResizeCrop
 from src.data.sample_transform.ResizeImageOnly import ResizeImageOnly
+from src.data.sample_transform.ShipCenteredCrop import ShipCenteredCrop
 from src.model.Unet import Unet
 from src.train.AirbusShipDetectorTrainingWrapper import AirbusShipDetectorTrainingWrapper
 
@@ -47,7 +48,9 @@ def main(args):
 
     if args.sampling == 'random':
         balanced_sampling = False
+        print('Random sampling during training')
     elif args.sampling == 'balanced':
+        print('Balanced sampling during training')
         balanced_sampling = True
     else:
         raise NotImplementedError('')
@@ -61,11 +64,11 @@ def main(args):
 
     # TODO: Implement transform builder to support different train and val transforms during training.
     # Set centered crop transform to train dataset, perform validation in original size.
-    # crop = ShipCenteredCrop(hw=(256, 256), center_crop_random_shift=0.3)
+    crop = ShipCenteredCrop(hw=(256, 256), center_crop_random_shift=0.3)
     # crop = RandomCrop(hw=(256, 256))
-    # train_dataset.set_sample_transform(RandomResizeCrop(max_resize_dim=256, crop=crop))
-    train_dataset.set_sample_transform(ResizeImageMask((256, 256)))
-    val_dataset.set_sample_transform(ResizeImageOnly((256, 256)))
+    train_dataset.set_sample_transform(RandomResizeCrop(max_resize_dim=256, crop=crop))
+    # train_dataset.set_sample_transform(ResizeImageMask((256, 256)))
+    # val_dataset.set_sample_transform(ResizeImageOnly((256, 256)))
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True,
                               persistent_workers=True, worker_init_fn=worker_init_fn)
