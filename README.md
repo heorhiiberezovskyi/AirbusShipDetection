@@ -16,7 +16,7 @@ Sampling: Balanced
 1. **Resize to 256: "dice": 0.784, "precision": 0.834, "recall": 0.740**
 2. Random ship-centered 256 crop: "dice": 0.666, "precision": 0.616, "recall": 0.724
 3. Random resize from 768 to 384, ship-centered crop: "dice": 0.704, "precision": 0.690, "recall": 0.718
-4. Random resize from 768 to 256, ship-centered crop: "dice": 0.675, "precision": 0.718, "recall": 0.637
+4. Random resize from 768 to 256, ship-centered crop: "dice": 0.706, "precision": 0.712, "recall": 0.700
 5. Random resize from 768 to 384, random crop: "dice": 0.646, "precision": 0.578, "recall": 0.731
 
 ## To Train
